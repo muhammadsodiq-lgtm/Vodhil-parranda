@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Narxlarni boshqarish</title>
+    <script src="config.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',sans-serif; background:#0f1923; color:#fff; min-height:100vh; }
+
+        .login-screen {
+            display:flex; align-items:center; justify-content:center;
+            min-height:100vh; padding:20px;
+        }
+        .login-box {
+            background:#1a2535; border:1px solid #2d3f55;
+            border-radius:16px; padding:36px 28px;
+            max-width:340px; width:100%; text-align:center;
+        }
+        .login-box h1 { color:#d4af37; font-size:1.4rem; margin-bottom:8px; }
+        .login-box p  { color:#6b7280; font-size:0.85rem; margin-bottom:24px; }
+        .login-box input {
+            width:100%; padding:12px 14px; border-radius:8px;
+            border:1px solid #2d3f55; background:#0f1923; color:#fff;
+            font-size:0.95rem; outline:none; margin-bottom:12px;
+        }
+        .login-box input:focus { border-color:#d4af37; }
+        .btn-login {
+            width:100%; padding:13px; background:#d4af37; color:#0f1923;
+            border:none; border-radius:8px; font-size:1rem; font-weight:700;
+            cursor:pointer;
+        }
+        .btn-login:hover { background:#b89327; }
+        .error-msg { color:#ef4444; font-size:0.82rem; margin-top:8px; }
+
+        /* ADMIN PANEL */
+        .admin-panel { display:none; max-width:700px; margin:0 auto; padding:24px 16px; }
+        .panel-header {
+            display:flex; align-items:center; justify-content:space-between;
+            margin-bottom:24px; flex-wrap:wrap; gap:12px;
+        }
+        .panel-header h1 { color:#d4af37; font-size:1.2rem; }
+        .btn-save-all {
+            padding:12px 24px; background:#22c55e; color:#fff;
+            border:none; border-radius:8px; font-size:0.95rem; font-weight:700;
+            cursor:pointer; transition:all 0.2s;
+        }
+        .btn-save-all:hover { background:#16a34a; }
+        .btn-save-all:disabled { background:#374151; cursor:not-allowed; }
+
+        .product-row {
+            background:#1a2535; border:1px solid #2d3f55;
+            border-radius:12px; padding:14px 16px;
+            margin-bottom:12px; display:flex;
+            align-items:center; gap:14px; flex-wrap:wrap;
+        }
+        .prod-emoji { font-size:1.6rem; flex-shrink:0; }
+        .prod-name  { flex:1; min-width:150px; font-size:0.92rem; font-weight:600; }
+        .prod-price-wrap {
+            display:flex; align-items:center; gap:6px;
+            background:#0f1923; border:1px solid #2d3f55;
+            border-radius:8px; padding:6px 10px;
+        }
+        .prod-price {
+            width:90px; border:none; background:transparent;
+            color:#22c55e; font-size:1rem; font-weight:700;
+            outline:none; text-align:right;
+            -moz-appearance:textfield; appearance:textfield;
+        }
+        .prod-price::-webkit-inner-spin-button,
+        .prod-price::-webkit-outer-spin-button { -webkit-appearance:none; }
+        .prod-price-unit { color:#6b7280; font-size:0.78rem; }
+
+        .status-bar {
+            background:#1a2535; border:1px solid #2d3f55;
+            border-radius:10px; padding:12px 16px;
+            margin-top:16px; font-size:0.85rem; color:#9ca3af;
+            text-align:center;
+        }
+        .status-bar.success { border-color:#22c55e; color:#22c55e; background:rgba(34,197,94,0.08); }
+        .status-bar.error   { border-color:#ef4444; color:#ef4444; background:rgba(239,68,68,0.08); }
+
+        .btn-logout {
+            padding:8px 14px; background:transparent; color:#6b7280;
+            border:1px solid #2d3f55; border-radius:8px; font-size:0.8rem;
+            cursor:pointer;
+        }
+        .btn-logout:hover { border-color:#ef4444; color:#ef4444; }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-box">
+        <h1>🐓 VOHDIL PARRANDA</h1>
+        <p>Gmail manzilingizni kiriting</p>
+        <input type="email" id="passwordInput" placeholder="Gmail kiriting..." autocomplete="email">
+        <button class="btn-login" id="loginBtn">Kirish</button>
+        <div class="error-msg" id="errorMsg"></div>
+    </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-panel" id="adminPanel">
+    <div class="panel-header">
+        <h1>🏷️ Narxlarni boshqarish</h1>
+        <div style="display:flex;gap:8px;">
+            <button class="btn-logout" id="logoutBtn">Chiqish</button>
+            <button class="btn-save-all" id="saveAllBtn">💾 Saqlash</button>
+        </div>
+    </div>
+    <div id="productList"></div>
+    <div class="status-bar" id="statusBar">Narxlarni o'zgartiring va "Saqlash" ni bosing</div>
+</div>
+
+<script>
+// GIST_ID, GIST_TOKEN, ADMIN_EMAILS — config.js dan olinadi
+
+let products = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('loginBtn').addEventListener('click', login);
+    document.getElementById('passwordInput').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('adminPanel').style.display  = 'none';
+        document.getElementById('passwordInput').value = '';
+    });
+    document.getElementById('saveAllBtn').addEventListener('click', saveAll);
+});
+
+function login() {
+    const email = document.getElementById('passwordInput').value.trim().toLowerCase();
+    const admins = window.ADMIN_EMAILS || (typeof ADMIN_EMAILS !== 'undefined' ? ADMIN_EMAILS : []);
+    if (admins.includes(email)) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminPanel').style.display  = 'block';
+        loadProducts();
+    } else {
+        document.getElementById('errorMsg').textContent = '❌ Bu gmail admin ro\'yxatida yo\'q!';
+        document.getElementById('passwordInput').value = '';
+    }
+}
+
+// Gist dan narxlarni yuklash
+async function loadProducts() {
+    const gistId  = window.GIST_ID || (typeof GIST_ID !== 'undefined' ? GIST_ID : '');
+    const statusBar = document.getElementById('statusBar');
+    statusBar.textContent = '🔄 Narxlar yuklanmoqda...';
+    statusBar.className = 'status-bar';
+    try {
+        const res  = await fetch(`https://api.github.com/gists/${gistId}?t=${Date.now()}`);
+        const data = await res.json();
+        products = JSON.parse(data.files['prices.json'].content);
+        renderProducts();
+        statusBar.textContent = '✅ Narxlar yuklandi. O\'zgartiring va saqlang.';
+        statusBar.className = 'status-bar success';
+    } catch(e) {
+        statusBar.textContent = '❌ Narxlarni yuklab bo\'lmadi: ' + e.message;
+        statusBar.className = 'status-bar error';
+    }
+}
+
+function renderProducts() {
+    const list = document.getElementById('productList');
+    list.innerHTML = '';
+    products.forEach((p, idx) => {
+        const row = document.createElement('div');
+        row.className = 'product-row';
+        row.innerHTML = `
+            <span class="prod-emoji">${p.emoji || '🍗'}</span>
+            <span class="prod-name">${p.name}</span>
+            <div class="prod-price-wrap">
+                <input type="number" class="prod-price" data-idx="${idx}"
+                       value="${p.price}" min="1000" step="500">
+                <span class="prod-price-unit">so'm/kg</span>
+            </div>
+        `;
+        list.appendChild(row);
+    });
+}
+
+// Saqlash
+async function saveAll() {
+    const gistId    = window.GIST_ID    || (typeof GIST_ID    !== 'undefined' ? GIST_ID    : '');
+    const gistToken = window.GIST_TOKEN || (typeof GIST_TOKEN !== 'undefined' ? GIST_TOKEN : '');
+    const btn       = document.getElementById('saveAllBtn');
+    const statusBar = document.getElementById('statusBar');
+
+    document.querySelectorAll('.prod-price').forEach(input => {
+        const idx = parseInt(input.dataset.idx);
+        const val = parseInt(input.value) || 0;
+        if (val > 0) products[idx].price = val;
+    });
+
+    btn.textContent = '⏳ Saqlanmoqda...';
+    btn.disabled    = true;
+    statusBar.textContent = '⏳ Gist yangilanmoqda...';
+    statusBar.className   = 'status-bar';
+
+    try {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+            method:  'PATCH',
+            headers: {
+                'Authorization': `token ${gistToken}`,
+                'Content-Type':  'application/json'
+            },
+            body: JSON.stringify({
+                files: { 'prices.json': { content: JSON.stringify(products, null, 2) } }
+            })
+        });
+
+        if (res.ok) {
+            statusBar.textContent = '✅ Narxlar muvaffaqiyatli saqlandi!';
+            statusBar.className   = 'status-bar success';
+        } else {
+            throw new Error('Server xatosi: ' + res.status);
+        }
+    } catch(e) {
+        statusBar.textContent = '❌ Xatolik: ' + e.message;
+        statusBar.className   = 'status-bar error';
+    }
+
+    btn.textContent = '💾 Saqlash';
+    btn.disabled    = false;
+}
+</script>
+</body>
+</html>

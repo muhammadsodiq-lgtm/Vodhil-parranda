@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VOHDIL PARRANDA — Zakaz berish</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="config.js"></script>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-logo">
+            <span class="logo-icon">🐓</span>
+            <div>
+                <div class="logo-name">VOHDIL PARRANDA</div>
+                <div class="logo-sub">Yuqori sifatli tovuq mahsulotlari</div>
+            </div>
+        </div>
+        <a href="tel:+998904075771" class="header-phone">📞 Qo'ng'iroq</a>
+    </header>
+
+    <!-- MAIN -->
+    <main>
+
+        <!-- RUXSAT KUTISH EKRANI -->
+        <div class="access-screen" id="accessScreen">
+            <div class="access-box">
+                <div class="access-icon" id="accessIcon">🔐</div>
+                <h2 id="accessTitle">Ruxsat so'ralmoqda...</h2>
+                <p id="accessMsg">Admin sizning so'rovingizni ko'rib chiqmoqda. Biroz kuting.</p>
+                <div class="access-loader" id="accessLoader"></div>
+                <div class="access-phones" id="accessPhones" style="display:none;">
+                    <p>Yoki qo'ng'iroq qiling:</p>
+                    <a href="tel:+998904075771">📞 +998 (90) 407-57-71</a>
+                    <a href="tel:+998200089663">💬 +998 (20) 008-96-63</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ASOSIY KONTENT (ruxsat berilgandan keyin ko'rinadi) -->
+        <div id="mainContent" style="display:none;">
+
+        <!-- NARXLAR -->
+        <section class="section">
+            <h2 class="section-title">📋 Narxlar jadvali</h2>
+            <div class="prices-grid" id="pricesGrid"></div>
+        </section>
+
+        <!-- ZAKAZ FORMI -->
+        <section class="section">
+            <h2 class="section-title">🛒 Zakaz berish</h2>
+            <div class="order-form" id="orderForm">
+
+                <!-- Mahsulotlar -->
+                <div class="form-block">
+                    <div class="block-label">Mahsulotlarni tanlang:</div>
+                    <div id="productLines"></div>
+                    <button class="add-line-btn" id="addLineBtn">+ Mahsulot qo'shish</button>
+                </div>
+
+                <!-- Jami -->
+                <div class="total-bar">
+                    <span>Jami kg: <strong id="totalKg">0 kg</strong></span>
+                    <span>Jami summa: <strong id="totalSum">0 so'm</strong></span>
+                </div>
+
+                <!-- Mijoz ma'lumotlari -->
+                <div class="form-block">
+                    <div class="block-label">Siz haqingizda (ixtiyoriy):</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>👤 Ismingiz</label>
+                            <input type="text" id="clientName" placeholder="Masalan: Aziz aka">
+                        </div>
+                        <div class="form-group">
+                            <label>📞 Telefon</label>
+                            <input type="tel" id="clientPhone" placeholder="+998 90 000-00-00">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:10px;">
+                        <label>📝 Manzil / Izoh</label>
+                        <textarea id="orderNote" placeholder="Yetkazib berish manzili yoki qo'shimcha..." rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Lokatsiya -->
+                <div class="form-block">
+                    <div class="block-label">📍 Yetkazib berish joyi:</div>
+                    <button class="btn-location" id="getLocationBtn">📍 Lokatsiyamni yuborish</button>
+                    <span class="location-status" id="locationStatus"></span>
+                    <div class="no-location-hint" id="noLocationHint" style="display:none;">
+                        <p>📍 Lokatsiya aniqlanmadi. Qo'ng'iroq qiling:</p>
+                        <div class="hint-phones">
+                            <a href="tel:+998904075771" class="hint-phone">📞 +998 (90) 407-57-71</a>
+                            <a href="tel:+998200089663" class="hint-phone">💬 +998 (20) 008-96-63</a>
+                        </div>
+                    </div>
+                    <input type="hidden" id="orderLat">
+                    <input type="hidden" id="orderLng">
+                </div>
+
+                <!-- To'lov -->
+                <div class="form-block">
+                    <div class="block-label">💳 To'lov usuli:</div>
+                    <div class="payment-opts">
+                        <label class="pay-opt">
+                            <input type="radio" name="payment" value="cash" checked>
+                            <span class="pay-opt-inner">💵 Naqt pul</span>
+                        </label>
+                        <label class="pay-opt">
+                            <input type="radio" name="payment" value="click" id="clickRadio">
+                            <span class="pay-opt-inner">📱 Click</span>
+                        </label>
+                    </div>
+
+                    <!-- Click bloki -->
+                    <div class="click-block" id="clickBlock" style="display:none;">
+                        <div class="click-top">
+                            <span>💳 Karta raqami:</span>
+                            <button type="button" class="copy-btn" id="copyBtn">📋 Nusxa</button>
+                        </div>
+                        <div class="card-number">9860 0825 9280 7547</div>
+                        <!-- Chek yuklash -->
+                        <div class="receipt-block" id="receiptBlock">
+                            <div class="receipt-label">📸 To'lov chekini yuboring:</div>
+                            <label class="receipt-upload" id="receiptUpload">
+                                <input type="file" id="receiptFile" accept="image/*" style="display:none;">
+                                <span>📁 Skrinshot yoki rasmni tanlang</span>
+                            </label>
+                            <div class="receipt-preview" id="receiptPreview" style="display:none;">
+                                <img id="receiptImg" src="" alt="Chek">
+                                <button type="button" class="remove-receipt" id="removeReceipt">✕</button>
+                            </div>
+                        </div>
+                        <label class="paid-check">
+                            <input type="checkbox" id="paidCheck">
+                            <span>✅ To'lovni amalga oshirdim</span>
+                        </label>
+                        <div class="click-warning" id="clickWarning" style="display:none;">
+                            ⚠️ Avval Click orqali to'lang!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Yuborish -->
+                <button class="btn-submit" id="submitBtn">✅ Zakazni yuborish</button>
+
+            </div>
+        </section>
+
+        <!-- Bog'lanish -->
+        <section class="section contact-section">
+            <h2 class="section-title">📞 Bog'lanish</h2>
+            <a href="tel:+998904075771" class="contact-phone">☎️ +998 (90) 407-57-71</a>
+            <a href="tel:+998200089663" class="contact-phone">💬 +998 (20) 008-96-63</a>
+            <p class="contact-note">📍 Farg'ona shahar va viloyati bo'ylab yetkazib berish</p>
+        </section>
+
+    </div><!-- /mainContent -->
+    </main>
+
+    <!-- SUCCESS MODAL -->
+    <div class="success-overlay" id="successOverlay" style="display:none;">
+        <div class="success-box">
+            <div class="success-icon">🎉</div>
+            <h2>Zakazingiz qabul qilindi!</h2>
+            <p>Zakaz raqami: <strong id="successOrderId"></strong></p>
+            <p>Operatorimiz tez orada siz bilan bog'lanadi!</p>
+            <div class="success-phones">
+                <a href="tel:+998904075771">📞 +998 (90) 407-57-71</a>
+                <a href="tel:+998200089663">💬 +998 (20) 008-96-63</a>
+            </div>
+            <button class="btn-submit" id="newOrderBtn" style="margin-top:16px;">🔄 Yangi zakaz</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
